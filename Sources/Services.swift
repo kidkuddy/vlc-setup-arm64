@@ -1,7 +1,7 @@
 import AppKit
 import SystemConfiguration
 
-// MARK: - Password (same NSUserDefaults keys as the original, so a stored password carries over)
+// MARK: - Password
 
 enum Access {
     static let defaultPassword = "vlcremote"
@@ -19,7 +19,7 @@ enum Access {
     static var passwordIsDefault: Bool { (storedPassword ?? defaultPassword) == defaultPassword }
 }
 
-// MARK: - Bonjour beacon the phone app looks for (-[CentralAccessFactory advertiseBonjour])
+// MARK: - Bonjour beacon the phone app looks for
 
 final class Beacon {
     private let service = NetService(domain: "local.", type: "_hs-ident._tcp.", name: "", port: 1)
@@ -36,7 +36,7 @@ final class Beacon {
 
 var bundleVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "12" }
 
-// MARK: - VLC install + preferences (Worker)
+// MARK: - VLC install + preferences
 
 enum VLC {
     static let bundleID = "org.videolan.vlc"
@@ -51,7 +51,7 @@ enum VLC {
         return fm.fileExists(atPath: defaultPath) ? defaultPath : nil
     }
 
-    /// -[Worker checkVersion]: 1.0 / 2.0 / 2.1, decided by which web-interface files the bundle ships.
+    /// 1.0 / 2.0 / 2.1, decided by which web-interface files the VLC bundle ships.
     static func version(at path: String) -> Float {
         let fm = FileManager.default
         if fm.fileExists(atPath: path + "/Contents/MacOS/share/http") { return 1.0 }
@@ -77,7 +77,7 @@ enum VLC {
     static let prefsFile = prefsDir + "/vlcrc"
     static let oldPrefsFile = NSString(string: "~/Library/Preferences/VLC/vlcrc").expandingTildeInPath
 
-    /// getPreferences + enableHttpInterface + savePreferences. Missing prefs start from the bundled template.
+    /// Reads vlcrc, enables the web interface and writes it back. Missing prefs start from the bundled template.
     static func enableHTTP(password: String) throws {
         let fm = FileManager.default
         let source = [prefsFile, oldPrefsFile].first(where: fm.fileExists(atPath:))
@@ -97,7 +97,7 @@ enum VLC {
     }
 }
 
-// MARK: - Firewall (-[Worker checkFirewallSetting], via socketfilterfw: com.apple.alf.plist no longer exists)
+// MARK: - Firewall (via socketfilterfw)
 
 enum Firewall {
     private static func fw(_ args: String...) -> String {
@@ -111,7 +111,7 @@ enum Firewall {
         return String(decoding: out.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
     }
 
-    /// nil when VLC can accept incoming connections, otherwise the original helper's explanation.
+    /// nil when VLC can accept incoming connections, otherwise an explanation for the user.
     static func problem(vlcPath: String) -> String? {
         guard fw("--getglobalstate").contains("enabled") else { return nil }
         if fw("--getblockall").contains("set to enabled") {
@@ -134,7 +134,7 @@ enum Firewall {
     }
 }
 
-// MARK: - Network info (PairingHandler / ConnectionHelp)
+// MARK: - Network info
 
 enum Net {
     /// IPv4 addresses per BSD interface name, loopback excluded.
@@ -157,7 +157,7 @@ enum Net {
         return result
     }
 
-    /// ipV4AddressesString: private-range addresses, sorted, comma separated.
+    /// Private-range addresses, sorted, comma separated.
     static var privateIPv4String: String {
         ipv4().map(\.ip).filter { $0.hasPrefix("192.") || $0.hasPrefix("10.") || $0.hasPrefix("172.") }
             .sorted().joined(separator: ",")
@@ -165,12 +165,12 @@ enum Net {
 
     static var computerName: String { (SCDynamicStoreCopyComputerName(nil, nil) as String?) ?? Host.current().localizedName ?? "Mac" }
 
-    /// fullyEscapedStringForUrl: also escapes ;/?:@&=+$,
+    /// Query escaping that also escapes ;/?:@&=+$,
     static func esc(_ s: String) -> String {
         s.addingPercentEncoding(withAllowedCharacters: CharacterSet.urlQueryAllowed.subtracting(CharacterSet(charactersIn: ";/?:@&=+$,"))) ?? s
     }
 
-    /// +[ConnectionHelp getHelpForApp:withPort:] opens the original helper's reachability test page.
+    /// Opens the online reachability test with this Mac's IPs and port 8080.
     static func openConnectionHelp() {
         let names = Dictionary((SCNetworkInterfaceCopyAll() as? [SCNetworkInterface] ?? []).compactMap { i -> (String, String)? in
             guard let bsd = SCNetworkInterfaceGetBSDName(i) as String? else { return nil }
@@ -185,7 +185,7 @@ enum Net {
     }
 }
 
-// MARK: - Web pairing (PairingHandler)
+// MARK: - Web pairing
 
 final class Pairing {
     private(set) var passcode = ""
@@ -213,7 +213,7 @@ final class Pairing {
         onChange?()
     }
 
-    /// canDoPairingCheck: at most 30 checks per passcode, at least 10 s apart.
+    /// At most 30 checks per passcode, at least 10 s apart.
     private func poll() {
         guard !inFlight else { return }
         if checks >= 30 { stoppedChecking = true; return }

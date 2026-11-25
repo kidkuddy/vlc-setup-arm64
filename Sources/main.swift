@@ -1,11 +1,6 @@
 import AppKit
 
-// Setup for VLC: native arm64 helper that prepares VLC for phone remote-control apps.
-// Unofficial, interoperable reimplementation of an x86-only setup helper; not affiliated with
-// Hobbyist Software or VideoLAN.
-// ponytail: dropped Sparkle (updates from the x86 feed), Crashlytics/Fabric (dead service),
-// CocoaLumberjack, and the VLC < 2.1 paths (.hosts / status.xml via authopen). No VLC that old
-// runs on Apple Silicon; on VLC >= 2.1 the original only edits vlcrc, which is what this does.
+// Setup for VLC: prepares VLC for phone remote-control apps. Supports VLC 2.1 and newer.
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
@@ -13,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     var beacon: Beacon?
     let pairing = Pairing()
 
-    // UIController outlets
+    // Controls updated after launch
     let deviceLabel = label("", bold: true)
     let webPairingButton = NSButton(title: "Run web pairing helper", target: nil, action: #selector(showPairing))
     let passwordCheckbox = NSButton(checkboxWithTitle: "Use custom password", target: nil, action: #selector(togglePassword))
@@ -37,7 +32,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func windowWillClose(_ n: Notification) { if (n.object as? NSWindow) == window { NSApp.terminate(nil) } }
 
-    // MARK: Layout (labels and actions from MainMenu.nib)
+    // MARK: Layout
 
     func buildWindow() {
         window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 686, height: 484),
@@ -156,7 +151,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         passwordField.stringValue = Access.password
     }
 
-    // MARK: -[Worker configureAllowingInternetAccess:]
+    // MARK: Setup flow
 
     func configure() async {
         guard let vlc = VLC.locate() else {

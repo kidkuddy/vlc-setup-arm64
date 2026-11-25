@@ -2,7 +2,7 @@ import Foundation
 
 let vlcrcMarker = "#added by Setup for VLC as could not find the preference elsewhere"
 
-/// Port of -[Worker enableHttpInterface] from the original x86_64 helper.
+/// Enables VLC's web interface in a vlcrc file.
 /// Every `extraintf=` / `#extraintf=` line becomes `extraintf=http`, every
 /// `http-password=` / `#http-password=` line gets the password. A key that is
 /// missing goes right after its section header ([main] / [lua]) behind the
